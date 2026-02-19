@@ -52,17 +52,14 @@ def safe_calc(operandos: List[float], operador: str) -> float:
     :raises ValueError: Para entradas inválidas
     """
 
-    # 🔹 Validação estrutural
     if not isinstance(operandos, list) or len(operandos) != 2:
         raise ValueError("Operandos inválidos. Devem ser uma lista com dois números.")
 
     num1, num2 = operandos
 
-    # 🔹 Validação de tipo
     if not all(isinstance(x, (int, float)) for x in operandos):
         raise ValueError("Operandos devem ser numéricos.")
 
-    # 🔹 Operações permitidas
     if operador == "+":
         return num1 + num2
 

@@ -6,31 +6,56 @@
 
 O **Artefact AI Gen Tool** é uma API inteligente que interpreta prompts em português, identifica operações matemáticas ou consultas financeiras e retorna resultados precisos. A ferramenta combina análise direta de expressões, parsing via LLM (Large Language Model) e integração com APIs externas, como a cotação do dólar.
 
----
+O projeto utiliza **Ollama como provider dos modelos LLM**, mas a arquitetura foi planejada de forma **modular**, permitindo substituir o provider facilmente. Por exemplo, seria possível integrar APIs pagas ou outros provedores com uma pequena implementação do provider, graças ao design injetável das dependências.
+
+A API possui uma **arquitetura híbrida para solução de problemas matemáticos**: perguntas simples podem ser resolvidas utilizando **regex**, evitando o uso de LLMs, que são caros computacionalmente, poupando recursos. Além de operações matemáticas tradicionais, a API também responde a perguntas utilizando linguagem natural do tipo:
+`"Tinha 5 pães, comprei mais dois, quantos pães eu tenho?"` → resultado: `7`, realizando a extração dos operandos e operador através do LLM, com prompt de saída estruturada.
+
+Exemplos de modelos usados: `deepseek-r1:latest` e `llama3:latest`, mas qualquer modelo suportado pelo Ollama pode ser utilizado.
+
 
 ## Funcionalidades
 
-- **Detecção de operações matemáticas em português**  
+* **Detecção de operações matemáticas em português**
   Ex: `"vinte vezes dez"`, `"30 mais 5"` → convertido para operação numérica.
-- **Conversão de linguagem natural para expressão Python**  
+  (Perguntas simples podem ser resolvidas via regex, poupando o uso de LLMs.)
+* **Conversão de linguagem natural para expressão Python**
   Suporta `+`, `-`, `*`, `/`, `**` (potência), `%` e negativos.
-- **Avaliação segura de expressões**  
+* **Avaliação segura de expressões**
   Usa AST para evitar execução de código malicioso.
-- **Consulta de cotação USD → BRL**  
+* **Consulta de cotação USD → BRL**
   Detecta frases relacionadas ao dólar e retorna cotação atual via API pública.
-- **Fallback via LLM**  
-  Caso o prompt não seja matemático, gera resposta textual usando LLM.
+* **Fallback via LLM**
+  Caso o prompt não seja matemático ou seja complexo, gera resposta textual usando LLM.
+* **Responde perguntas simples de contagem ou adição em linguagem natural**
+  Ex: `"Tinha 5 pães, comprei mais dois, quantos pães eu tenho?"`
+  (A extração dos operandos e operador é feita via LLM com prompt de saída estruturada.)
 
----
 
 ## Arquitetura do fluxo
 
-1. **Regex + AST**  
-   - Extrai expressão matemática direta e calcula.
-2. **Parser via LLM**  
-   - Converte prompt em JSON `{operandos, operador}` e calcula seguro.
-3. **Fallback LLM direto**  
-   - Retorna resposta textual quando o prompt não é matemático.
+1. **Verificação de consulta de câmbio**
+
+   * Identifica se o prompt é uma pergunta sobre cotação do dólar (USD → BRL).
+   * Se for, consulta a API externa e retorna o resultado.
+   * Exemplo: `"Quanto está o dólar hoje?"` → Retorna cotação atual.
+
+2. **Regex + AST**
+
+   * Extrai expressões matemáticas diretas e calcula.
+   * Perguntas simples podem ser resolvidas aqui, poupando o uso de LLM.
+   * Exemplo: `"2 + 2"`, `"2 * 3"`, `"10 vezes 9"` → Retorna o resultado.
+
+3. **Parser via LLM**
+
+   * Converte expressões matemáticas ou linguagem natural simples em JSON `{operandos, operador}` e calcula seguro.
+   * Usado para operações matemáticas mais complexas em português.
+   * Exemplo: `"Quanto é 2 mais três?"` → Retorna 5.
+
+4. **Fallback LLM direto**
+
+   * Retorna resposta textual para perguntas gerais ou consultas de conhecimento, não matemáticas e não sobre câmbio.
+   * Exemplo: `"Quem foi Albert Einstein?"` → Retorna resposta textual informativa.
 
 **Fluxo resumido:**
 
@@ -38,34 +63,39 @@ O **Artefact AI Gen Tool** é uma API inteligente que interpreta prompts em port
 Prompt recebido
        |
        v
-1️⃣ Regex + AST -> resultado? -> sim -> Retorna
+1️⃣ Verifica se é consulta de dólar -> sim -> Retorna cotação (ex: "Quanto está o dólar hoje?")
        |
        v
-2️⃣ LLM Parser -> resultado? -> sim -> Retorna
+2️⃣ Regex + AST -> resultado? -> sim -> Retorna (ex: "2 + 2", "2 * 3", "10 vezes 9")
        |
        v
-3️⃣ LLM direto -> Retorna resposta
+3️⃣ LLM Parser -> resultado? -> sim -> Retorna (ex: "Quanto é 2 mais três?")
+       |
+       v
+4️⃣ LLM direto -> Retorna resposta (ex: "Quem foi Albert Einstein?")
 ```
 
 ---
 
+
+
 ## Tecnologias
 
-- Python 3.11+
-- FastAPI
-- Uvicorn
-- Pydantic
-- LLM (Ollama Llama3)
-- Requests (API cotação dólar)
+* Python 3.11+
+* FastAPI
+* Uvicorn
+* Pydantic
+* LLM (Ollama) – `deepseek-r1:latest`, `llama3:latest` (exemplo)
+* Requests (API cotação dólar)
 
 ---
 
 ## Endpoints
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
+| Método | Endpoint | Descrição                                                           |
+| ------ | -------- | ------------------------------------------------------------------- |
 | POST   | `/ia`    | Recebe `prompt` e retorna resultado da análise (matemática ou LLM). |
-| GET    | `/test`  | Verifica se a API está rodando. |
+| GET    | `/test`  | Verifica se a API está rodando.                                     |
 
 **Exemplo POST `/ia`:**
 
@@ -82,6 +112,24 @@ Prompt recebido
 {
   "source": "calculator_regex",
   "result": 42
+}
+```
+
+**Exemplo POST `/ia` com linguagem natural simples:**
+
+```json
+{
+  "prompt": "Tinha 5 pães, comprei mais dois, quantos pães eu tenho?",
+  "model": "deepseek-r1:latest"
+}
+```
+
+**Exemplo de resposta:**
+
+```json
+{
+  "source": "calculator_llm_parser",
+  "result": 7
 }
 ```
 
@@ -137,9 +185,13 @@ GET http://localhost:3000/test
 ```python
 from services.prompt_analisis_service import promptAnalysis
 
-result = promptAnalysis("quanto é 20 vezes 5?")
+result = promptAnalysis("quanto é 20 vezes 5?", model="llama3:latest")
 print(result)
 # Output: {'source': 'calculator_regex', 'result': 100}
+
+result2 = promptAnalysis("Tinha 5 pães, comprei mais dois, quantos pães eu tenho?", model="deepseek-r1:latest")
+print(result2)
+# Output: {'source': 'calculator_llm_parser', 'result': 7}
 ```
 
 ---
@@ -147,4 +199,3 @@ print(result)
 ## Licença
 
 MIT License – livre para uso e modificação.
-
