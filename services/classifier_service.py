@@ -15,10 +15,6 @@ class LabelEnum(str, Enum):
 class DetectMathOperation(BaseModel):
     isMathOperation: LabelEnum
 
-# def is_math_by_regex(prompt: str) -> bool:
-#     math_pattern = r"(-?\d+(\.\d+)?\s*(mais|menos|vezes|dividido por|elevado a|elevado|[\+\-\*/\%\^])\s*-?\d+(\.\d+)?)"
-#     return bool(re.search(math_pattern, prompt, flags=re.IGNORECASE))
-
 def parse_math_operation(prompt: str, model=None) -> MathOperation:
     """
     Usa o LLM para transformar uma frase em operação matemática em JSON estruturado.
