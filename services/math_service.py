@@ -1,7 +1,6 @@
 import re
 import ast
 import operator as op
-import json
 
 operators = {
     ast.Add: op.add,

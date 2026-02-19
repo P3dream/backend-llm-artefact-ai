@@ -184,7 +184,7 @@ Prompt recebido
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/SEU_USUARIO/artefact-ai-gen-tool.git
+git clone https://github.com/P3dream/backend-llm-artefact-ai
 cd artefact-ai-gen-tool
 ```
 

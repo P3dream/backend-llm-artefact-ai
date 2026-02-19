@@ -15,7 +15,6 @@ def promptAnalysis(prompt: str, model: str | None = None):
 
     prompt_lower = prompt.lower()
 
-    # 0️⃣ Verificar cotação do dólar
     if (
         ("dólar" in prompt_lower or "dolar" in prompt_lower)
         and any(word in prompt_lower for word in ["quanto", "cotação", "vale", "está", "hoje"])
@@ -32,7 +31,6 @@ def promptAnalysis(prompt: str, model: str | None = None):
                 "result": "Não foi possível consultar a cotação no momento."
             }
 
-# 1️⃣ Regex + AST
     expr = extract_expression(prompt)
     if expr and is_valid_expr(expr):
         result = safe_eval(expr)
@@ -41,7 +39,6 @@ def promptAnalysis(prompt: str, model: str | None = None):
             "result": result
         }
 
-    # 2️⃣ Parser estruturado via LLM
     parsed = parse_math_operation(prompt, model)
     if parsed and parsed.operandos and parsed.operador:
         operandos = [float(x) for x in parsed.operandos]
@@ -51,7 +48,6 @@ def promptAnalysis(prompt: str, model: str | None = None):
             "result": result
         }
 
-    # 3️⃣ Fallback LLM
     result = call_llm(prompt, model=model)
     return {
         "source": "llm_direct",
