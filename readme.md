@@ -18,7 +18,7 @@ Exemplos de modelos usados: `deepseek-r1:latest` e `llama3:latest`, mas qualquer
 
 * **Detecção de operações matemáticas em português**
   Ex: `"vinte vezes dez"`, `"30 mais 5"` → convertido para operação numérica.
-  (Perguntas simples podem ser resolvidas via regex, poupando o uso de LLMs.)
+  (Perguntas simples podem ser resolvidas via **regex**, poupando o uso de LLMs e recursos computacionais.)
 * **Conversão de linguagem natural para expressão Python**
   Suporta `+`, `-`, `*`, `/`, `**` (potência), `%` e negativos.
 * **Avaliação segura de expressões**
@@ -30,7 +30,8 @@ Exemplos de modelos usados: `deepseek-r1:latest` e `llama3:latest`, mas qualquer
 * **Responde perguntas simples de contagem ou adição em linguagem natural**
   Ex: `"Tinha 5 pães, comprei mais dois, quantos pães eu tenho?"`
   (A extração dos operandos e operador é feita via LLM com prompt de saída estruturada.)
-
+* **Indicação da fonte da resposta**
+  O backend informa de qual etapa veio o resultado (`regex`, `parser LLM`, `LLM direto` ou `API de câmbio`), permitindo transparência e rastreabilidade.
 
 ## Arquitetura do fluxo
 
@@ -97,7 +98,9 @@ Prompt recebido
 | POST   | `/ia`    | Recebe `prompt` e retorna resultado da análise (matemática ou LLM). |
 | GET    | `/test`  | Verifica se a API está rodando.                                     |
 
-**Exemplo POST `/ia`:**
+# Exemplos de uso da API `/ia`
+
+**Exemplo POST com operação matemática direta:**
 
 ```json
 {
@@ -115,7 +118,9 @@ Prompt recebido
 }
 ```
 
-**Exemplo POST `/ia` com linguagem natural simples:**
+---
+
+**Exemplo POST com linguagem natural simples (contagem ou adição):**
 
 ```json
 {
@@ -134,6 +139,45 @@ Prompt recebido
 ```
 
 ---
+
+**Exemplo POST com pergunta sobre cotação do dólar:**
+
+```json
+{
+  "prompt": "Quanto está o dólar hoje?",
+  "model": "llama3:latest"
+}
+```
+
+**Exemplo de resposta:**
+
+```json
+{
+  "source": "exchange_api",
+  "result": "O dólar está cotado a R$ 5.25"
+}
+```
+
+---
+
+**Exemplo POST com pergunta geral de conhecimento:**
+
+```json
+{
+  "prompt": "Quem foi Albert Einstein?",
+  "model": "llama3:latest"
+}
+```
+
+**Exemplo de resposta:**
+
+```json
+{
+  "source": "llm_direct",
+  "result": "Albert Einstein foi um físico teórico alemão, famoso por desenvolver a teoria da relatividade e contribuir para a física moderna."
+}
+```
+
 
 ## Instalação
 
@@ -163,6 +207,33 @@ GET http://localhost:3000/test
 ```
 
 ---
+
+# Baixando modelos no Ollama
+
+Para usar os modelos LLM, você precisa baixá-los no Ollama. Exemplos de modelos utilizados no projeto: `llama3:latest`, `deepseek-r1:latest`.
+
+1. Instale o Ollama CLI seguindo as instruções oficiais: [https://ollama.com/download](https://ollama.com/download)
+2. Faça login no Ollama CLI:
+
+```bash
+ollama login
+```
+
+3. Baixe o modelo desejado:
+
+```bash
+ollama pull llama3:latest
+ollama pull deepseek-r1:latest
+```
+
+4. Verifique os modelos disponíveis:
+
+```bash
+ollama list models
+```
+
+Depois disso, os modelos estarão disponíveis para uso no backend da API e podem ser referenciados pelo nome ao enviar requests.
+
 
 ## Estrutura do projeto
 
@@ -195,6 +266,7 @@ print(result2)
 ```
 
 ---
+
 
 ## Licença
 

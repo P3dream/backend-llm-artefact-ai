@@ -1,6 +1,5 @@
 import json
 from ollama import chat
-from typing import Any
 
 def call_llm(
     prompt: str,
