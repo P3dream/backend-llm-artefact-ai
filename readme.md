@@ -267,6 +267,21 @@ print(result2)
 
 ---
 
+# O que aprendi e o que faria diferente com mais tempo
+
+## O que eu aprendi:
+
+Nesse projeto, pude colocar em prática a integração de diferentes ferramentas utilizando um modelo de LLM. Também implementei uma arquitetura híbrida, que evita a utilização excessiva do LLM quando a entrada pode ser resolvida por métodos mais simples, como regex.
+
+Além disso, como estou utilizando LLMs no meu TCC e pretendo fazer um mestrado em IA, essa experiência foi muito enriquecedora para mim e reforçou meu interesse em seguir trabalhando com desenvolvimento fullstack integrado com inteligência artificial.
+
+## O que eu faria diferente se tivesse mais tempo:
+
+* Tornar a arquitetura mais robusta, isolando melhor as responsabilidades;
+* Adicionar suporte a operações matemáticas mais complexas e funções avançadas;
+* Implementar testes automatizados para maior confiabilidade;
+* Permitir caching de respostas de consultas frequentes, como a cotação do dólar, para reduzir chamadas externas e melhorar o desempenho.
+
 
 ## Licença
 
